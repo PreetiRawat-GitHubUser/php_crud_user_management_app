@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UserList</title>
+    <style>
+        @media (max-width: 768px) {
+        .container {
+            flex-direction: column;
+        }
+
+        input, select {
+            width: 100%;
+        }
+
+        table {
+            width: 100%;
+            overflow-x: auto;
+        }
+        }
+
+        body {
+            background-color: rgb(204, 224, 240);
+        }
+
+        .container {
+        display: flex;
+        gap: 12px;
+        align-items: flex-start;
+        }
+
+
+        .left-item {
+         flex: 0 0 360px;
+        }
+
+        .right-item {
+            /* will take remaining space */
+            flex: 1; 
+        }
+
+
+        #button {
+        background-color: rgb(34, 110, 241);
+        padding: 8px 16px;
+        cursor: pointer;
+        color: white;
+        border: none;
+        border-radius: 6px;
+    }
+
+        input,
+        select {
+            width: 100%;
+            max-width: 320px;
+            box-sizing: border-box;
+            background-color: rgb(204, 224, 240);
+            border: 1px solid rgb(136, 135, 135);
+            padding: 7px;
+            border-radius: 4px;
+        }
+
+        table {
+            border: 1px solid rgb(136, 135, 135);
+            border-collapse: collapse;
+            padding: 10px 10px;
+            width: 100%;
+             border-radius:4px;
+
+        }
+
+        th,
+        td {
+            border-radius:4px;
+            border-bottom: 1px solid rgb(136, 135, 135);
+            padding: 10px;
+            text-align: left;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        a {
+        text-decoration: none;
+        color: black;
+        font-weight: 600;
+        }
+
+        .link-btn {
+            background: none;
+            border: none;
+            font-weight:bold;
+        cursor: pointer;} 
+
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="left-item">
+            <!-- <h1>this is left align</h1> -->
+            <h1>User Information</h1>
+            <!-- <form action="ajax/submit.php" method="POST" id="my-form"> -->
+            <form method="POST" id="userForm">
+                <label for="name">Name</label>
+                <br><br>
+                <input type="text" id="name" name="name" placeholder="Enter name" required>
+                <br><br>
+                <label for="email">Email</label>
+                <br><br>
+                <input type="email" id="email" name="email" placeholder="Enter email" required>
+                <br><br>
+                <label for="age">Age</label>
+                <br><br>
+                <input type="number" id="age" name="age" placeholder="Enter age" min='1' max="120" required>
+                <br><br>
+                <label for="gender">Gender</label>
+                <br><br>
+                <select id="gender" name="gender" required>
+                    <option value=""disabled selected hidden>Select Gender</option>
+                    <option value="Female">Female</option>
+                    <option value="male">Male</option>
+                </select>
+                <br><br>
+                <input type="submit" name="sb" value="Submit" id="button">
+
+                <input type="hidden" name="id" id="user_id">
+
+
+            </form>
+        </div>
+
+        <!-- script to submit data on db through submit.php -->
+        <script>
+            console.log("js loaded");
+            document.getElementById('userForm').addEventListener('submit', function (e) {
+                e.preventDefault();
+
+                let formData = new FormData(this);
+                //check for edit also
+                if(this.dataset.editId){
+                    formData.append('id', this.dataset.editId);
+                }
+
+                fetch('ajax/submit.php', {
+                    method: 'POST',
+                    body: formData
+                })
+                    .then(response => response.text())
+                    .then(msg => {
+                        alert(msg);
+                        this.reset();
+                       delete this.dataset.editId;
+                       document.getElementById('user_id').value = '';
+                       loadUsers();
+                    })
+                    .catch(error => console.error(error));
+            });
+        </script>
+
+        <div class="right-item">
+            <!-- <h1>this is right align</h1> -->
+            <h1>User List</h1>
+            <table>
+                <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Age</th>
+                    <th>Gender</th>
+                    <th>Actions</th>
+                </tr>
+                
+                </thead>
+                <tbody id="userTable">
+                    <!-- data from list.php dhows here -->
+                </tbody>
+            </table>
+
+        </div>
+
+        <!-- script to fetch data and edit /delete in ui tablE -->
+        <script>
+         function loadUsers(){
+            fetch ('list.php')
+            .then(res => res.text())
+            .then(data =>{
+                document.getElementById('userTable').innerHTML =data; 
+            })
+            .catch(err => console.error(err));
+         }
+
+         //loading data 
+         loadUsers();
+
+
+         function deleteUser(id){
+            if(!confirm('Delete this user?')) return;
+            let formData =new FormData();
+            formData.append('id', id);
+
+            fetch('ajax/delete.php', {
+                method:'POST',
+                body: formData
+            })
+            .then(()=> loadUsers());
+         }
+
+         function editUser(id){
+            let formData =new FormData();
+            formData.append('id',id);
+
+            fetch('ajax/edit.php', {
+                method: 'POST',
+                body:formData
+            })
+            .then(res =>res.json())
+            .then(data => {
+                document.getElementById('name').value = data.name;
+                 document.getElementById('email').value = data.email;
+                  document.getElementById('age').value = data.age;
+                   document.getElementById('gender').value = data.gender;
+                document.getElementById('userForm').dataset.editId = data.id;
+                document.getElementById('user_id').value = data.id;
+            });
+         }
+        </script>
+    </div>
+</body>
+
+</html>
